@@ -48,19 +48,22 @@ class InterviewBit:
             'id': lambda x: x and x.startswith('problem_')
         })
 
-        def get_problem_name(tr):
+        def get_problem_id_and_name(tr):
             tds = tr.find_all('td')
             if len(tds) < 1:
                 return None
 
             problem_href = tds[0].a.get('href')
             problem_name = problem_href.split('/')[-2]
+            problem_id = -1 if tr['id'] is None else int(tr['id'][8:])
 
-            return problem_name
+            return (problem_id, problem_name)
 
-        problem_names = map(get_problem_name, problems)
-        problem_names = [s for s in problem_names if s] # remove None
-        return problem_names
+        solved_problems = requests.get(f'https://www.interviewbit.com/courses/programming/topics/{topic}/get_user_progress/', headers=self.headers).json()['solved_problem_ids']
+
+        problems = map(get_problem_id_and_name, problems)
+        problems = [{'id': s[0], 'name': s[1], 'solved': s[0] in solved_problems} for s in problems if s[1]] # remove None
+        return problems
     
     def get_solved_code(self, problem):
         problem_url = f"https://www.interviewbit.com/problems/{problem}/"
@@ -86,11 +89,14 @@ class InterviewBit:
 
         # get the actual code
         editor_wrapper = soup.find('div', {'id': 'editor_wrapper'})
-        
+
+        # get the language
+        language = soup.find('select', {'id': 'select-language'}).find('option', {'selected': lambda x: x is not None}).string
+
         code = None
         if editor_wrapper.textarea:
             code = editor_wrapper.textarea.get_text()
 
-        return code
+        return {'code': code, 'language': language}
 
 
