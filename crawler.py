@@ -16,7 +16,7 @@ ib = InterviewBit(conf.get('cookie', ''))
 topics = ib.get_programming_topics()
 
 def getExtByLanguage(lang):
-    if lang == 'C':
+    if lang.startswith('C '):
         return 'c'
     if lang.startswith('C++'):
         return 'cpp'
